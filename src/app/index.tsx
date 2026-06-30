@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Dimensions, StyleSheet, Text, View } from "react-native";
+import myBalloon from "../components/Balloon";
 
 const { width, height } = Dimensions.get("window");
 
@@ -12,7 +13,27 @@ const COLORS = [
   "#FF7A00",
   "#FF4FD8",
 ];
-const FACES = ["🦸", "🦸‍♀️", "🤖", "🦄", "🐲", "👽", "🧙", "🐱", "🐭", "🦇"];
+const FACES = [
+  "🦸",
+  "😃",
+  "🦄",
+  "🐲",
+  "⚽️",
+  "🧙",
+  "🐱",
+  "🐭",
+  "🦇",
+  "🐻",
+  "🍔",
+  "💁",
+  "🎷",
+  "🌻",
+  "🍹",
+  "☀️",
+  "🌱",
+  "🐢",
+  "🌍",
+];
 
 let nextId = 1;
 
@@ -73,6 +94,7 @@ function Balloon({ data, onEscape }: any) {
       <View style={[styles.balloon, { backgroundColor: data.color }]}>
         <Text style={styles.face}>{data.emoji}</Text>
       </View>
+      <View style={[styles.neck, { backgroundColor: data.color }]} />
       <View style={[styles.knot, { borderTopColor: data.color }]} />
       <BalloonString />
 
@@ -110,8 +132,8 @@ export default function Home() {
 
   return (
     <View style={styles.screen}>
-      {balloons.map((b) => (
-        <Balloon key={b.id} data={b} onEscape={removeBalloon} />
+      {balloons.map((b, index) => (
+        <Balloon key={index} data={b} onEscape={removeBalloon} />
       ))}
     </View>
   );
@@ -121,28 +143,38 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#FFF1C9", overflow: "hidden" },
   balloonWrap: { position: "absolute", alignItems: "center" },
   balloon: {
-    width: 86,
-    height: 106,
-    borderRadius: 48,
+    width: 90,
+    height: 80, // equal → perfect circle base
+    borderRadius: 40, // half of width → fully round
+    backgroundColor: "#FF1B6B", // per-balloon via data.color
     alignItems: "center",
     justifyContent: "center",
+    transform: [{ scaleY: 1.25 }], // stretch vertically → prolate spheroid
     elevation: 4,
     shadowColor: "#000",
     shadowOpacity: 0.18,
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 3 },
   },
-  face: { fontSize: 48 },
-  knot: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 10,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
+  neck: {
+    width: 12,
+    height: 10,
+    backgroundColor: "#FF1B6B",
     alignSelf: "center",
-    marginTop: -1,
+    marginTop: -4,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
+  },
+  face: {
+    fontSize: 44,
+    transform: [{ scaleY: 1 / 1.25 }], // 0.8 → cancels the parent's vertical stretch
+  },
+  knot: {
+    width: 10,
+    height: 10,
+    alignSelf: "center",
+    marginTop: -3,
+    transform: [{ rotate: "45deg" }],
   },
   string: {
     width: 1.5,
