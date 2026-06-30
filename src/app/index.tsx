@@ -1,6 +1,14 @@
+import { createAudioPlayer } from "expo-audio";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, StyleSheet, Text, View } from "react-native";
-import myBalloon from "../components/Balloon";
+import {
+  Animated,
+  Dimensions,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import ConfettiCannon from "react-native-confetti-cannon";
 
 const { width, height } = Dimensions.get("window");
 
@@ -52,7 +60,7 @@ function BalloonString() {
   );
 }
 
-function Balloon({ data, onEscape }: any) {
+function Balloon({ data, onEscape, onPop }: any) {
   const y = useRef(new Animated.Value(height + 120)).current;
   const sway = useRef(new Animated.Value(0)).current;
 
@@ -75,7 +83,7 @@ function Balloon({ data, onEscape }: any) {
           duration: 900,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     ).start();
   }, []);
 
@@ -91,9 +99,11 @@ function Balloon({ data, onEscape }: any) {
         { left: data.x, transform: [{ translateY: y }, { translateX }] },
       ]}
     >
-      <View style={[styles.balloon, { backgroundColor: data.color }]}>
-        <Text style={styles.face}>{data.emoji}</Text>
-      </View>
+      <Pressable onPress={() => onPop(data)}>
+        <View style={[styles.balloon, { backgroundColor: data.color }]}>
+          <Text style={styles.face}>{data.emoji}</Text>
+        </View>
+      </Pressable>
       <View style={[styles.neck, { backgroundColor: data.color }]} />
       <View style={[styles.knot, { borderTopColor: data.color }]} />
       <BalloonString />
@@ -104,7 +114,28 @@ function Balloon({ data, onEscape }: any) {
 }
 
 export default function Home() {
+  const player = useRef(
+    createAudioPlayer(require("../../assets/pop.mp3")),
+  ).current;
   const [balloons, setBalloons] = useState<any[]>([]);
+  const [confetti, setConfetti] = useState<any[]>([]);
+
+  //for ballon popup
+  const popBalloon = useCallback((balloon) => {
+    player.seekTo(0);
+    player.play();
+
+    setConfetti((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        x: balloon.x + 45,
+        y: height / 2,
+      },
+    ]);
+
+    removeBalloon(balloon.id);
+  }, []);
 
   useEffect(() => {
     const spawn = () => {
@@ -127,13 +158,28 @@ export default function Home() {
 
   const removeBalloon = useCallback(
     (id: number) => setBalloons((prev) => prev.filter((b) => b.id !== id)),
-    []
+    [],
   );
+
+  {
+    confetti.map((c) => (
+      <ConfettiCannon
+        count={80}
+        origin={{ x: balloonX, y: balloonY }}
+        fadeOut
+      />
+    ));
+  }
 
   return (
     <View style={styles.screen}>
       {balloons.map((b, index) => (
-        <Balloon key={index} data={b} onEscape={removeBalloon} />
+        <Balloon
+          key={b.id}
+          data={b}
+          onEscape={removeBalloon}
+          onPop={popBalloon}
+        />
       ))}
     </View>
   );
