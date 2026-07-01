@@ -1,30 +1,79 @@
+import Balloon from "@/components/Balloon";
 import { COLORS, FACES } from "@/components/utils";
-import { createAudioPlayer } from "expo-audio";
+import WelcomeScreen from "@/components/WelcomeScreen";
+import { createAudioPlayer, setAudioModeAsync } from "expo-audio";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, View } from "react-native";
-import ConfettiCannon from "react-native-confetti-cannon";
+import { ConfettiMethods, PIConfetti } from "react-native-fast-confetti";
 import styles from "./styles";
-import Balloon from "@/components/Balloon";
+import PartyBackground from "@/components/PartyBackground";
 
 const { width, height } = Dimensions.get("window");
 
 let nextBalloonId = 1;
-let nextConfettiId = 1;
 
 export default function Home() {
+  //background music code (birds, girl/man birthday)
+  //background music (birds ambience + alternating birthday tracks)
+  const TRACKS = [
+    require("../../assets/birthday-girl.mp3"),
+    require("../../assets/birthday-man.mp3"),
+  ];
+
+  const music = useRef(createAudioPlayer(TRACKS[0])).current;
+  const trackIndex = useRef(0);
+
+  const birds = useRef(
+    createAudioPlayer(require("../../assets/birds.mp3"))
+  ).current;
+
+  useEffect(() => {
+    setAudioModeAsync({ playsInSilentMode: true });
+
+    // birds — continuous ambience, loops forever
+    birds.loop = true;
+    birds.volume = 0.08;
+    birds.play();
+
+    // girl/man — alternate on finish
+    music.loop = false;
+    music.volume = 0.2;
+    music.play();
+
+    const sub = music.addListener("playbackStatusUpdate", (status) => {
+      if (status.didJustFinish) {
+        trackIndex.current = (trackIndex.current + 1) % TRACKS.length;
+        music.replace(TRACKS[trackIndex.current]);
+        music.volume = 0.2;
+        music.play();
+      }
+    });
+
+    return () => {
+      sub.remove();
+      music.pause();
+      music.release();
+      birds.pause();
+      birds.release();
+    };
+  }, []);
+
+  //balloon pop code
   const player = useRef(
     createAudioPlayer(require("../../assets/pop.mp3"))
   ).current;
+
   const [balloons, setBalloons] = useState<any[]>([]);
-  const [confetti, setConfetti] = useState<any[]>([]);
+  const [showWelcome, setShowWelcome] = useState(true);
+
+  const confettiRef = useRef<ConfettiMethods>(null);
+
+  // blast point is now a prop, not a restart() argument
+  const [blastPos, setBlastPos] = useState({ x: width / 2, y: height / 2 });
+  const didMount = useRef(false);
 
   const removeBalloon = useCallback(
     (id: number) => setBalloons((prev) => prev.filter((b) => b.id !== id)),
-    []
-  );
-
-  const removeConfetti = useCallback(
-    (id: number) => setConfetti((prev) => prev.filter((c) => c.id !== id)),
     []
   );
 
@@ -33,15 +82,22 @@ export default function Home() {
       player.seekTo(0);
       player.play();
 
-      setConfetti((prev) => [
-        ...prev,
-        { id: nextConfettiId++, x: balloon.x + 45, y: height / 2 },
-      ]);
+      // move the origin; the effect below fires the burst
+      setBlastPos({ x: balloon.x + 45, y: height / 2 });
 
       removeBalloon(balloon.id);
     },
     [player, removeBalloon]
   );
+
+  // fire the burst after the new blastPosition prop is committed
+  useEffect(() => {
+    if (!didMount.current) {
+      didMount.current = true; // skip the initial mount so nothing fires on load
+      return;
+    }
+    confettiRef.current?.restart();
+  }, [blastPos]);
 
   useEffect(() => {
     const spawn = () => {
@@ -63,25 +119,33 @@ export default function Home() {
   }, []);
 
   return (
-    <View style={styles.screen}>
-      {balloons.map((b) => (
-        <Balloon
-          key={b.id}
-          data={b}
-          onEscape={removeBalloon}
-          onPop={popBalloon}
-        />
-      ))}
+    <>
+      <View style={styles.screen}>
+        <PartyBackground />
 
-      {confetti.map((c) => (
-        <ConfettiCannon
-          key={c.id}
-          count={80}
-          origin={{ x: c.x, y: c.y }}
-          fadeOut
-          onAnimationEnd={() => removeConfetti(c.id)}
-        />
-      ))}
-    </View>
+        {balloons.map((b) => (
+          <Balloon
+            key={b.id}
+            data={b}
+            onEscape={removeBalloon}
+            onPop={popBalloon}
+          />
+        ))}
+
+        <PIConfetti
+          ref={confettiRef}
+          autoplay={false}
+          colors={COLORS}
+          fadeOutOnEnd
+        >
+          <PIConfetti.Origin blastPosition={blastPos} count={80}>
+            <PIConfetti.Flake size={12} radius={6} />
+            <PIConfetti.Flake width={8} height={14} />
+          </PIConfetti.Origin>
+        </PIConfetti>
+      </View>
+
+      {showWelcome && <WelcomeScreen onFinish={() => setShowWelcome(false)} />}
+    </>
   );
 }
