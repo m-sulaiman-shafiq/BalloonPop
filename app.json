@@ -1,16 +1,19 @@
 {
+  "owner": "SultanSoft",
   "expo": {
-    "name": "BalloonPop",
-    "slug": "BalloonPop",
+    "name": "Birthday Balloon Pop",
+    "slug": "balloon-pop",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "balloonpop",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "bundleIdentifier": "com.suleman.balloonpop",
+      "icon": "./assets/images/icon.png"
     },
     "android": {
+      "package": "com.suleman.balloonpop",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

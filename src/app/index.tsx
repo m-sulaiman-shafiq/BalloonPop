@@ -1,12 +1,12 @@
 import Balloon from "@/components/Balloon";
+import PartyBackground from "@/components/PartyBackground";
 import { COLORS, FACES } from "@/components/utils";
 import WelcomeScreen from "@/components/WelcomeScreen";
-import { createAudioPlayer, setAudioModeAsync } from "expo-audio";
+import { createAudioPlayer } from "expo-audio";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, View } from "react-native";
 import { ConfettiMethods, PIConfetti } from "react-native-fast-confetti";
 import styles from "./styles";
-import PartyBackground from "@/components/PartyBackground";
 
 const { width, height } = Dimensions.get("window");
 
@@ -24,43 +24,12 @@ export default function Home() {
   const trackIndex = useRef(0);
 
   const birds = useRef(
-    createAudioPlayer(require("../../assets/birds.mp3"))
+    createAudioPlayer(require("../../assets/birds.mp3")),
   ).current;
-
-  useEffect(() => {
-    setAudioModeAsync({ playsInSilentMode: true });
-
-    // birds — continuous ambience, loops forever
-    birds.loop = true;
-    birds.volume = 0.08;
-    birds.play();
-
-    // girl/man — alternate on finish
-    music.loop = false;
-    music.volume = 0.2;
-    music.play();
-
-    const sub = music.addListener("playbackStatusUpdate", (status) => {
-      if (status.didJustFinish) {
-        trackIndex.current = (trackIndex.current + 1) % TRACKS.length;
-        music.replace(TRACKS[trackIndex.current]);
-        music.volume = 0.2;
-        music.play();
-      }
-    });
-
-    return () => {
-      sub.remove();
-      music.pause();
-      music.release();
-      birds.pause();
-      birds.release();
-    };
-  }, []);
 
   //balloon pop code
   const player = useRef(
-    createAudioPlayer(require("../../assets/pop.mp3"))
+    createAudioPlayer(require("../../assets/pop.mp3")),
   ).current;
 
   const [balloons, setBalloons] = useState<any[]>([]);
@@ -74,20 +43,19 @@ export default function Home() {
 
   const removeBalloon = useCallback(
     (id: number) => setBalloons((prev) => prev.filter((b) => b.id !== id)),
-    []
+    [],
   );
 
   const popBalloon = useCallback(
     (balloon: any) => {
       player.seekTo(0);
       player.play();
-
       // move the origin; the effect below fires the burst
       setBlastPos({ x: balloon.x + 45, y: height / 2 });
 
       removeBalloon(balloon.id);
     },
-    [player, removeBalloon]
+    [player, removeBalloon],
   );
 
   // fire the burst after the new blastPosition prop is committed
