@@ -1,6 +1,6 @@
 {
-  "owner": "SultanSoft",
   "expo": {
+    "owner": "muhammadsuleman761",
     "name": "Birthday Balloon Pop",
     "slug": "balloon-pop",
     "version": "1.0.0",
@@ -43,6 +43,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9d9798e9-b253-4fe7-b533-8e6aac966aa8"
+      }
     }
   }
 }
