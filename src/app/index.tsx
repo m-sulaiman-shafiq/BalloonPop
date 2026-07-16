@@ -2,7 +2,7 @@ import Balloon from "@/components/Balloon";
 import PartyBackground from "@/components/PartyBackground";
 import { COLORS, FACES } from "@/components/utils";
 import WelcomeScreen from "@/components/WelcomeScreen";
-import { createAudioPlayer } from "expo-audio";
+import { createAudioPlayer, setAudioModeAsync } from "expo-audio";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, View } from "react-native";
 import { ConfettiMethods, PIConfetti } from "react-native-fast-confetti";
@@ -84,6 +84,40 @@ export default function Home() {
     spawn();
     const t = setInterval(spawn, 1300);
     return () => clearInterval(t);
+  }, []);
+
+  //to play the music on load
+  useEffect(() => {
+    (async () => {
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+      });
+
+      birds.loop = true;
+      birds.volume = 0.08;
+      birds.play();
+
+      music.loop = false;
+      music.volume = 0.2;
+      music.play();
+    })();
+
+    const sub = music.addListener("playbackStatusUpdate", (status) => {
+      if (status.didJustFinish) {
+        trackIndex.current = (trackIndex.current + 1) % TRACKS.length;
+        music.replace(TRACKS[trackIndex.current]);
+        music.volume = 0.2;
+        music.play();
+      }
+    });
+
+    return () => {
+      sub.remove();
+      music.pause();
+      music.release();
+      birds.pause();
+      birds.release();
+    };
   }, []);
 
   return (
