@@ -50,10 +50,16 @@ export default function Home() {
     (balloon: any) => {
       player.seekTo(0);
       player.play();
-      // move the origin; the effect below fires the burst
-      setBlastPos({ x: balloon.x + 45, y: height / 2 });
 
-      removeBalloon(balloon.id);
+      setBlastPos({
+        x: balloon.x + 45,
+        y: height / 2,
+      });
+
+      // Give Android a tiny moment before removing the component.
+      setTimeout(() => {
+        removeBalloon(balloon.id);
+      }, 60);
     },
     [player, removeBalloon],
   );
